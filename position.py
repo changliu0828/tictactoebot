@@ -32,11 +32,9 @@ class Position:
             self.macroboard[3 * next_mby + next_mbx] = -1
         else:
             self.macroboard = [(-1 if x==0 else x) for x in self.macroboard]
-        #print('make_move')
-        #print(x, y, self.macroboard)
 
     def get_board(self):
-        return ''.join(self.board, ',')
+        return ''.join(str(self.board))
 
     def get_macroboard(self):
         return ''.join(self.macroboard, ',')
@@ -44,6 +42,7 @@ class Position:
     def evaluate(self, myid, oppid):
         local_boards = [[self.board[9 * iy + ix] for iy in range(y * 3, y * 3 + 3) for ix in range(x * 3, x * 3 + 3)]
                         for x in range(3) for y in range(3)]
+        #print([(b,self.board_score(b, myid, oppid))  for b in local_boards])
         return self.board_score(self.macroboard, myid, oppid) * 100 + sum([self.board_score(b, myid, oppid) for b in local_boards])
 
     def board_score(self, b, myid, oppid):
@@ -57,10 +56,10 @@ class Position:
                  [(2, 0), (1, 1), (0, 2)]] #d1
         score = 0
         line_scores = [self.line_score([b[y*3+x] for (x,y) in line], myid, oppid) for line in lines]
-        if max(line_scores) == 3:
-            score = 3
-        elif min(line_scores) == -3:
-            score = -3
+        if max(line_scores) == 9:
+            score = 9
+        elif min(line_scores) == -9:
+            score = -9
         else:
             score = max(line_scores) + min(line_scores)
         return score
@@ -75,7 +74,11 @@ class Position:
                 opp_num = opp_num + 1
         if my_num != 0 and opp_num != 0:
             return 0
-        return my_num - opp_num
+        if my_num > 0:
+            return my_num ** 2
+        if opp_num > 0:
+            return - (opp_num ** 2)
+        return 0
 
     def is_occupied(self, mbx, mby, myid, oppid):
         lines = [[(0, 0), (1, 0), (2, 0)], #r0
@@ -100,3 +103,5 @@ class Position:
                  [(2, 0), (1, 1), (0, 2)]] #d1
         line_scores = [self.line_score([self.macroboard[y * 3 + x] for (x, y) in line], myid, oppid) for line in lines]
         return max(line_scores) == 3 or min(line_scores) == -3
+
+
