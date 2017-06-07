@@ -20,8 +20,6 @@ class Position:
 
     def make_move(self, move, pid, myid, oppid):
         (x, y) = move
-        #if (x,y) == (8,7):
-            #print(self.get_macroboard())
         self.board[9 * y + x] = pid
         mbx, mby = x / 3, y / 3
         if self.is_occupied(mbx, mby, myid, oppid):
@@ -35,9 +33,6 @@ class Position:
             self.macroboard[3 * next_mby + next_mbx] = -1
         else:
             self.macroboard = [(-1 if i==0 else i) for i in self.macroboard]
-        #if (x, y) == (8, 7):
-            #print(self.get_macroboard())
-            #print(self.get_board())
 
     def get_board(self):
         return ''.join(str(self.board))
@@ -49,7 +44,12 @@ class Position:
         local_boards = [[self.board[9 * iy + ix] for iy in range(y * 3, y * 3 + 3) for ix in range(x * 3, x * 3 + 3)]
                         for x in range(3) for y in range(3)]
         #print([(b,self.board_score(b, myid, oppid))  for b in local_boards])
-        return self.board_score(self.macroboard, myid, oppid) * 100 + sum([self.board_score(b, myid, oppid) for b in local_boards])
+        macroboard_score = self.board_score(self.macroboard, myid, oppid)
+        if (macroboard_score == 8):
+            return 1000
+        if (macroboard_score == -8):
+            return -1000
+        return macroboard_score * 100 + sum([self.board_score(b, myid, oppid) for b in local_boards])
 
     def board_score(self, b, myid, oppid):
         lines = [[(0, 0), (1, 0), (2, 0)], #r0
@@ -62,14 +62,12 @@ class Position:
                  [(2, 0), (1, 1), (0, 2)]] #d1
         score = 0
         line_scores = [self.line_score([b[y*3+x] for (x,y) in line], myid, oppid) for line in lines]
-        if max(line_scores) == 9:
-            score = 9
-        elif min(line_scores) == -9:
-            score = -9
+        if max(line_scores) == 8:
+            score = 8
+        elif min(line_scores) == -8:
+            score = -8
         else:
-            #print(max(line_scores), min(line_scores))
-            score = max(line_scores) + min(line_scores)
-        #print(score)
+            score = sum(line_scores)
         return score
 
     def line_score(self, l, myid, oppid):
@@ -80,12 +78,16 @@ class Position:
                 my_num = my_num + 1
             elif x == oppid:
                 opp_num = opp_num + 1
-        if my_num != 0 and opp_num != 0:
+        if my_num == 3:
+            return 8
+        elif opp_num == 3:
+            return -8
+        elif my_num != 0 and opp_num != 0:
             return 0
-        if my_num > 0:
-            return my_num ** 2
-        if opp_num > 0:
-            return - (opp_num ** 2)
+        elif my_num > 0:
+            return 1
+        elif opp_num > 0:
+            return -1
         return 0
 
     def is_occupied(self, mbx, mby, myid, oppid):
@@ -99,7 +101,7 @@ class Position:
                  [(2, 0), (1, 1), (0, 2)]] #d1
         b = [self.board[9 * iy + ix] for iy in range(mby * 3, mby * 3 + 3) for ix in range(mbx * 3, mbx * 3 + 3)]
         line_scores = [self.line_score([b[y*3+x] for (x,y) in line], myid, oppid) for line in lines]
-        return max(line_scores) == 9 or min(line_scores) == -9
+        return max(line_scores) == 8 or min(line_scores) == -8
     def is_game_over(self, myid, oppid):
         lines = [[(0, 0), (1, 0), (2, 0)], #r0
                  [(0, 1), (1, 1), (2, 1)], #r1
@@ -110,6 +112,6 @@ class Position:
                  [(0, 0), (1, 1), (2, 2)], #d0
                  [(2, 0), (1, 1), (0, 2)]] #d1
         line_scores = [self.line_score([self.macroboard[y * 3 + x] for (x, y) in line], myid, oppid) for line in lines]
-        return max(line_scores) == 3 or min(line_scores) == -3
+        return max(line_scores) == 8 or min(line_scores) == -8
 
 
